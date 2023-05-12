@@ -17,7 +17,8 @@ os.environ['CUDA_VISIBLE_DEVICES']='3'
 # os.environ['CUDA_VISIBLE_DEVICES']='0'
 log_device_placement=True
 allow_soft_placement=True
-tf.ConfigProto(log_device_placement=True,allow_soft_placement=True)
+import tensorflow as tf
+tf.compat.v1.ConfigProto(log_device_placement=True,allow_soft_placement=True)
 config = tf.ConfigProto()
 config.gpu_options.per_process_gpu_memory_fraction = 0.99
 config.gpu_options.allow_growth = True
@@ -339,7 +340,7 @@ with tf.name_scope('fusion'):
     fusion_image=decoder(fusion_image_fff)
 
 
-with tf.Session() as sess:
+with tf.compat.v1.Session() as sess:
     init_op=tf.global_variables_initializer()
     sess.run(init_op)
     #data_ir=prepare_data('Enh_IR')
