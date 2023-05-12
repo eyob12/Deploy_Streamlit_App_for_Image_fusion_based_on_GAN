@@ -174,8 +174,8 @@ def encoder_ir(img):
         return conv4_ir      
     '''
 def encoder_ir(img):
-    with tf.variable_scope('encoder_ir'):
-        with tf.variable_scope('layer1'):
+    with tf.compat.v1.variable_scope('encoder_ir'):
+        with tf.compat.v1.variable_scope('layer1'):
             weights = tf.Variable(tf.constant(reader.get_tensor('encoder_ir/layer1/w1')), name='w1')
             bias = tf.Variable(tf.constant(reader.get_tensor('encoder_ir/layer1/b1')), name='b1')
             conv1_ir = tf.keras.layers.Conv2D(filters=64, kernel_size=(3,3), strides=(1,1), padding='SAME', use_bias=False)(img)
@@ -211,8 +211,8 @@ def encoder_ir(img):
         return conv4_ir
     
 def encoder_vi(img):
-    with tf.variable_scope('encoder_vi'):
-        with tf.variable_scope('layer1'):
+    with tf.compat.v1.variable_scope('encoder_vi'):
+        with tf.compat.v1.variable_scope('layer1'):
             weights = tf.Variable(reader.get_tensor('encoder_vi/layer1/w1'), name="w1")
             bias = tf.Variable(reader.get_tensor('encoder_vi/layer1/b1'), name="b1")
             conv1_ir = tf.keras.layers.Conv2D(filters=64, kernel_size=3, strides=1, padding='same', use_bias=False, name="conv1_ir")(img)
