@@ -311,7 +311,10 @@ ref_img = all_image_files[dataset_type]['ref_img']
 
 num_epoch=28
 path = '_100_onlyadd_THREE22'
-reader = tf.train.NewCheckpointReader('./checkpoint_20/ENH_CGAN'+path+'/CGAN.model-'+ str(num_epoch))
+reader = tf.train.load_checkpoint('./checkpoint_20/ENH_CGAN'+path+'/CGAN.model-'+ str(num_epoch))
+# retrieve the variable values
+var_values = [checkpoint.get_tensor(var_name) for var_name in var_names]
+
 
 with tf.name_scope('IR_input'):
 
