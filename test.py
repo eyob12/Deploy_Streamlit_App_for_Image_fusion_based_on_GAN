@@ -423,7 +423,7 @@ checkpoint_path = './checkpoint_20/ENH_CGAN'+path+'/CGAN.model-'+ str(num_epoch)
 reader = tf.train.load_checkpoint(checkpoint_path)
 var_names = reader.get_variable_to_shape_map().keys()
 # retrieve the variable values
-var_values = [checkpoint.get_tensor(var_name) for var_name in var_names]
+var_values = [reader.get_tensor(var_name) for var_name in var_names]
 
 
 with tf.name_scope('IR_input'):
