@@ -322,11 +322,13 @@ var_values = [checkpoint.get_tensor(var_name) for var_name in var_names]
 
 with tf.name_scope('IR_input'):
 
-    images_ir = tf.placeholder(tf.float32, [1,None,None,None], name='images_ir')
+    #images_ir = tf.placeholder(tf.float32, [1,None,None,None], name='images_ir')
+    images_ir = tf.keras.Input(shape=(None,None,None), batch_size=1, name='images_ir')
     
 with tf.name_scope('VI_input'):
     
-        images_vi = tf.placeholder(tf.float32,  [1,None,None,None], name='images_vi')
+        #images_vi = tf.placeholder(tf.float32,  [1,None,None,None], name='images_vi')
+        images_vi = tf.keras.Input(shape=(None,None,None), batch_size=1, name='images_vi')
         
 with tf.name_scope('input'):
     #self.resize_ir=tf.image.resize_images(self.images_ir, (self.image_size, self.image_size), method=2)
@@ -335,7 +337,8 @@ with tf.name_scope('input'):
 #self.pred=tf.clip_by_value(tf.sign(self.pred_ir-self.pred_vi),0,1)
 with tf.name_scope('ref_input'):
   #images_ref=referance_images(images_ir, images_vi)
-    images_ref=tf.placeholder(tf.float32, [1,None,None,None], name='images_ref')
+    #images_ref=tf.placeholder(tf.float32, [1,None,None,None], name='images_ref')
+    images_ref = tf.keras.Input(shape=(None,None,None), batch_size=1, name='images_ref')
 
 
 with tf.name_scope('fusion'): 
