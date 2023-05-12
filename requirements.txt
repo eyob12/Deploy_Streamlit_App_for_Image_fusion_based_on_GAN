@@ -1,0 +1,10 @@
+tensorflow
+scipy
+opencv-python-headless==4.5.4.58
+numpy
+tqdm
+Pillow
+streamlit
+matplotlib
+imageio
+simplejson
