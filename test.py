@@ -182,7 +182,7 @@ def encoder_ir(img):
             conv1_ir = tf.keras.layers.BatchNormalization(scale=True, center=True)(conv1_ir)
             conv1_ir = tf.keras.layers.LeakyReLU(alpha=0.2)(conv1_ir)
 
-        with tf.variable_scope('layer2'):
+        with tf.compat.v1.variable_scope('layer2'):
             weights = tf.Variable(tf.constant(reader.get_tensor('encoder_ir/layer2/w2')), name='w2')
             bias = tf.Variable(tf.constant(reader.get_tensor('encoder_ir/layer2/b2')), name='b2')
             vivi = tf.concat([images_vi, images_vi], axis=-1)
@@ -192,7 +192,7 @@ def encoder_ir(img):
             conv2_ir = tf.keras.layers.BatchNormalization(scale=True, center=True)(conv2_ir)
             conv2_ir = tf.keras.layers.LeakyReLU(alpha=0.2)(conv2_ir)
 
-        with tf.variable_scope('layer3'):
+        with tf.compat.v1.variable_scope('layer3'):
             weights = tf.Variable(tf.constant(reader.get_tensor('encoder_ir/layer3/w3')), name='w3')
             bias = tf.Variable(tf.constant(reader.get_tensor('encoder_ir/layer3/b3')), name='b3')
             conv3_add = tf.concat([conv2_add, conv2_ir], axis=-1)
@@ -200,7 +200,7 @@ def encoder_ir(img):
             conv3_ir = tf.keras.layers.BatchNormalization(scale=True, center=True)(conv3_ir)
             conv3_ir = tf.keras.layers.LeakyReLU(alpha=0.2)(conv3_ir)
 
-        with tf.variable_scope('layer4'):
+        with tf.compat.v1.variable_scope('layer4'):
             weights = tf.Variable(tf.constant(reader.get_tensor('encoder_ir/layer4/w4')), name='w4')
             bias = tf.Variable(tf.constant(reader.get_tensor('encoder_ir/layer4/b4')), name='b4')
             conv4_add = tf.concat([conv3_add, conv3_ir], axis=-1)
@@ -229,7 +229,7 @@ def encoder_vi(img):
             conv2_ir = tf.keras.layers.BatchNormalization(name="bn2")(conv2_ir)
             conv2_ir = tf.keras.layers.LeakyReLU(name="relu2")(conv2_ir)
 
-        with tf.variable_scope('layer3'):
+        with tf.compat.v1.variable_scope('layer3'):
             weights = tf.Variable(reader.get_tensor('encoder_vi/layer3/w3'), name="w3")
             bias = tf.Variable(reader.get_tensor('encoder_vi/layer3/b3'), name="b3")
             conv3_add = tf.concat([conv2_add, conv2_ir], axis=-1)
@@ -237,7 +237,7 @@ def encoder_vi(img):
             conv3_ir = tf.keras.layers.BatchNormalization(name="bn3")(conv3_ir)
             conv3_ir = tf.keras.layers.LeakyReLU(name="relu3")(conv3_ir)
 
-        with tf.variable_scope('layer4'):
+        with tf.compat.v1.variable_scope('layer4'):
             weights = tf.Variable(reader.get_tensor('encoder_vi/layer4/w4'), name="w4")
             bias = tf.Variable(reader.get_tensor('encoder_vi/layer4/b4'), name="b4")
             conv4_add = tf.concat([conv3_add, conv3_ir], axis=-1)
