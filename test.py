@@ -121,17 +121,17 @@ def fusion_model(img):
             conv5_ir= tf.nn.conv2d(conv5_add, weights, strides=[1,1,1,1], padding='VALID') + bias
             conv5_ir=tf.nn.tanh(conv5_ir)
     return conv5_ir
-'''
+
 def encoder_ir(img):
           
-    with tf.variable_scope('encoder_ir'):
-        with tf.variable_scope('layer1'):
+    with tf.compat.v1.variable_scope('encoder_ir'):
+        with tf.compat.v1.variable_scope('layer1'):
             weights=tf.get_variable("w1",initializer=tf.constant(reader.get_tensor('encoder_ir/layer1/w1')))
             bias=tf.get_variable("b1",initializer=tf.constant(reader.get_tensor('encoder_ir/layer1/b1')))
             conv1_ir= tf.contrib.layers.batch_norm(tf.nn.conv2d(img, weights, strides=[1,1,1,1], padding='SAME') + bias, decay=0.9, updates_collections=None, epsilon=1e-5, scale=True)
             conv1_ir = lrelu(conv1_ir)
           
-        with tf.variable_scope('layer2'):
+        with tf.compat.v1.variable_scope('layer2'):
             weights=tf.get_variable("w2",initializer=tf.constant(reader.get_tensor('encoder_ir/layer2/w2')))
             
             bias=tf.get_variable("b2",[128],initializer=tf.constant_initializer(0.0))
@@ -152,7 +152,7 @@ def encoder_ir(img):
             conv2_ir= tf.contrib.layers.batch_norm(tf.nn.conv2d(conv2_add, weights, strides=[1,1,1,1], padding='SAME') + bias, decay=0.9, updates_collections=None, epsilon=1e-5, scale=True)
             conv2_ir = lrelu(conv2_ir)
 
-        with tf.variable_scope('layer3'):
+        with tf.compat.v1.variable_scope('layer3'):
             # weights=tf.get_variable("w3",[3,3,130,64],initializer=tf.truncated_normal_initializer(stddev=1e-3))
             weights=tf.get_variable("w3",initializer=tf.constant(reader.get_tensor('encoder_ir/layer3/w3')))
             
@@ -161,7 +161,7 @@ def encoder_ir(img):
             conv3_ir= tf.contrib.layers.batch_norm(tf.nn.conv2d(conv3_add, weights, strides=[1,1,1,1], padding='SAME') + bias, decay=0.9, updates_collections=None, epsilon=1e-5, scale=True)
             conv3_ir = lrelu(conv3_ir)
 
-        with tf.variable_scope('layer4'):
+        with tf.compat.v1.variable_scope('layer4'):
             # weights=tf.get_variable("w4",[3,3,66,32],initializer=tf.truncated_normal_initializer(stddev=1e-3))
             weights=tf.get_variable("w4",initializer=tf.constant(reader.get_tensor('encoder_ir/layer4/w4')))
             
@@ -179,6 +179,8 @@ def encoder_ir(img):
             weights = tf.Variable(tf.constant(reader.get_tensor('encoder_ir/layer1/w1')), name='w1')
             bias = tf.Variable(tf.constant(reader.get_tensor('encoder_ir/layer1/b1')), name='b1')
             conv1_ir = tf.keras.layers.Conv2D(filters=64, kernel_size=(3,3), strides=(1,1), padding='SAME', use_bias=False)(img)
+            
+
             conv1_ir = tf.keras.layers.BatchNormalization(scale=True, center=True)(conv1_ir)
             conv1_ir = tf.keras.layers.LeakyReLU(alpha=0.2)(conv1_ir)
 
@@ -209,7 +211,7 @@ def encoder_ir(img):
             conv4_ir = tf.keras.layers.LeakyReLU(alpha=0.2)(conv4_ir)
 
         return conv4_ir
-    
+    '''
 def encoder_vi(img):
     with tf.compat.v1.variable_scope('encoder_vi'):
         with tf.compat.v1.variable_scope('layer1'):
