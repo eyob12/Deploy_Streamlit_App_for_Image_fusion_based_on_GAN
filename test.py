@@ -19,10 +19,10 @@ log_device_placement=True
 allow_soft_placement=True
 import tensorflow as tf
 tf.compat.v1.ConfigProto(log_device_placement=True,allow_soft_placement=True)
-config = tf.ConfigProto()
+config = tf.compat.v1.ConfigProto()
 config.gpu_options.per_process_gpu_memory_fraction = 0.99
 config.gpu_options.allow_growth = True
-K.set_session(tf.Session(graph=tf.get_default_graph(),config=config))
+K.set_session(tf.compat.v1.Session(graph=tf.get_default_graph(),config=config))
 
 
 def singleScaleRetinex(img, variance):
