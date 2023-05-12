@@ -298,7 +298,39 @@ def encoder_vi(img):
             
         return conv4_ir 
         '''
-      
+def decoder(img):
+    #Flag1 = tf.concat([ir,vi],axis=-1)
+    with tf.compat.v1.variable_scope('decoder'):
+        with tf.compat.v1.variable_scope('Layer1'):
+            weights=tf.compat.v1.get_variable("W1",initializer=tf.constant(reader.get_tensor('decoder/Layer1/W1')))
+            #weights=weights_spectral_norm(weights)
+            bias=tf.compat.v1.get_variable("B1",initializer=tf.constant(reader.get_tensor('decoder/Layer1/B1')))
+            conv1= tf.compat.v1.layers.batch_normalization(tf.nn.conv2d(img, weights, strides=[1,1,1,1], padding='SAME') + bias, decay=0.9, updates_collections=None, epsilon=1e-5, scale=True)
+            conv1 = lrelu(conv1)
+
+        with tf.compat.v1.variable_scope('Layer2'):
+            weights=tf.compat.v1.get_variable("W2",initializer=tf.constant(reader.get_tensor('decoder/Layer2/W2')))
+            #weights=weights_spectral_norm(weights)
+            bias=tf.compat.v1.get_variable("B2",initializer=tf.constant(reader.get_tensor('decoder/Layer2/B2')))
+            conv2= tf.compat.v1.layers.batch_normalization(tf.nn.conv2d(conv1, weights, strides=[1,1,1,1], padding='SAME') + bias, decay=0.9, updates_collections=None, epsilon=1e-5, scale=True)
+            conv2 = lrelu(conv2)
+
+        with tf.compat.v1.variable_scope('Layer3'):
+            weights=tf.compat.v1.get_variable("W3",initializer=tf.constant(reader.get_tensor('decoder/Layer3/W3')))
+            #weights=weights_spectral_norm(weights)
+            bias=tf.compat.v1.get_variable("B3",initializer=tf.constant(reader.get_tensor('decoder/Layer3/B3')))
+            conv3= tf.compat.v1.layers.batch_normalization(tf.nn.conv2d(conv2, weights, strides=[1,1,1,1], padding='SAME') + bias, decay=0.9, updates_collections=None, epsilon=1e-5, scale=True)
+            conv3 = lrelu(conv3)
+
+        with tf.compat.v1.variable_scope('Layer4'):
+            weights=tf.compat.v1.get_variable("W4",initializer=tf.constant(reader.get_tensor('decoder/Layer4/W4')))
+            #weights=weights_spectral_norm(weights)
+            bias=tf.compat.v1.get_variable("B4",initializer=tf.constant(reader.get_tensor('decoder/Layer4/B4')))
+            conv4= tf.nn.conv2d(conv3, weights, strides=[1,1,1,1], padding='SAME') + bias
+            conv4 = tf.nn.tanh(conv4)
+    return conv4
+
+'''      
 def decoder(img):
     #Flag1 = tf.concat([ir,vi],axis=-1)
     with tf.variable_scope('decoder'):
@@ -330,7 +362,7 @@ def decoder(img):
             conv4= tf.nn.conv2d(conv3, weights, strides=[1,1,1,1], padding='SAME') + bias
             conv4 = tf.nn.tanh(conv4)
     return conv4
-
+'''
 
 def input_setup(index):
     padding=0
