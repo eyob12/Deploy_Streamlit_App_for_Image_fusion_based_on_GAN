@@ -156,15 +156,15 @@ def decoder(img):
 
 
 def encoder_ir(img):
-    with tf.variable_scope('encoder_ir'):
-        with tf.variable_scope('layer1'):
+    with tf.name_scope('encoder_ir'):
+        with tf.name_scope('layer1'):
             weights = tf.constant_initializer(reader.get_tensor('encoder_ir/layer1/w1'))
             bias = tf.constant_initializer(reader.get_tensor('encoder_ir/layer1/b1'))
             conv1_ir = tf.keras.layers.Conv2D(filters=64, kernel_size=(3, 3), strides=(1, 1), padding='SAME', use_bias=False, kernel_initializer=weights)(img)
             conv1_ir = tf.keras.layers.BatchNormalization()(conv1_ir)
             conv1_ir = tf.keras.layers.LeakyReLU()(conv1_ir)
 
-        with tf.variable_scope('layer2'):
+        with tf.name_scope('layer2'):
             weights = tf.constant_initializer(reader.get_tensor('encoder_ir/layer2/w2'))
             bias = tf.constant_initializer(0.0)
             vivi = tf.concat([images_vi, images_vi], axis=-1)
@@ -174,7 +174,7 @@ def encoder_ir(img):
             conv2_ir = tf.keras.layers.BatchNormalization()(conv2_ir)
             conv2_ir = tf.keras.layers.LeakyReLU()(conv2_ir)
 
-        with tf.variable_scope('layer3'):
+        with tf.name_scope('layer3'):
             weights = tf.constant_initializer(reader.get_tensor('encoder_ir/layer3/w3'))
             bias = tf.constant_initializer(reader.get_tensor('encoder_ir/layer3/b3'))
             conv3_add = tf.concat([conv2_add, conv2_ir], axis=-1)
@@ -182,7 +182,7 @@ def encoder_ir(img):
             conv3_ir = tf.keras.layers.BatchNormalization()(conv3_ir)
             conv3_ir = tf.keras.layers.LeakyReLU()(conv3_ir)
 
-        with tf.variable_scope('layer4'):
+        with tf.name_scope('layer4'):
             weights = tf.constant_initializer(reader.get_tensor('encoder_ir/layer4/w4'))
             bias = tf.constant_initializer(reader.get_tensor('encoder_ir/layer4/b4'))
             conv4_add = tf.concat([conv3_add, conv3_ir], axis=-1)
@@ -193,14 +193,14 @@ def encoder_ir(img):
         return conv4_ir
  
 def encoder_vi(img):
-  with tf.variable_scope('encoder_vi'):
-        with tf.variable_scope('layer1'):
+  with tf.name_scope('encoder_vi'):
+        with tf.name_scope('layer1'):
             weights=tf.Variable(initial_value=tf.constant(reader.get_tensor('encoder_vi/layer1/w1')), name="w1")
             bias=tf.Variable(initial_value=tf.constant(reader.get_tensor('encoder_vi/layer1/b1')), name="b1")
             conv1_ir= tf.keras.layers.Conv2D(filters=64, kernel_size=3, strides=1, padding='SAME')(img)
             conv1_ir = tf.nn.relu(tf.keras.layers.BatchNormalization()(conv1_ir))
 
-        with tf.variable_scope('layer2'):
+        with tf.name_scope('layer2'):
             weights=tf.Variable(initial_value=tf.constant(reader.get_tensor('encoder_vi/layer2/w2')), name="w2")
             bias=tf.Variable(initial_value=tf.zeros([128]), name="b2")
             
@@ -211,14 +211,14 @@ def encoder_vi(img):
             conv2_ir = tf.keras.layers.Conv2D(filters=64, kernel_size=3, strides=1, padding='SAME')(conv2_add)
             conv2_ir = tf.nn.relu(tf.keras.layers.BatchNormalization()(conv2_ir))
 
-        with tf.variable_scope('layer3'):
+        with tf.name_scope('layer3'):
             weights=tf.Variable(initial_value=tf.constant(reader.get_tensor('encoder_vi/layer3/w3')), name="w3")
             bias=tf.Variable(initial_value=tf.constant(reader.get_tensor('encoder_vi/layer3/b3')), name="b3")
             conv3_add = tf.concat([conv2_add, conv2_ir], axis=-1)
             conv3_ir = tf.keras.layers.Conv2D(filters=64, kernel_size=3, strides=1, padding='SAME')(conv3_add)
             conv3_ir = tf.nn.relu(tf.keras.layers.BatchNormalization()(conv3_ir))
 
-        with tf.variable_scope('layer4'):
+        with tf.name_scope('layer4'):
             weights=tf.Variable(initial_value=tf.constant(reader.get_tensor('encoder_vi/layer4/w4')), name="w4")
             bias=tf.Variable(initial_value=tf.constant(reader.get_tensor('encoder_vi/layer4/b4')), name="b4")
             conv4_add = tf.concat([conv3_add, conv3_ir], axis=-1)
