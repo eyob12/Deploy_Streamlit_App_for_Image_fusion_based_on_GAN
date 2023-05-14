@@ -17,12 +17,11 @@ os.environ['CUDA_VISIBLE_DEVICES']='3'
 # os.environ['CUDA_VISIBLE_DEVICES']='0'
 log_device_placement=True
 allow_soft_placement=True
-import tensorflow as tf
-tf.compat.v1.ConfigProto(log_device_placement=True,allow_soft_placement=True)
-config = tf.compat.v1.ConfigProto()
+tf.ConfigProto(log_device_placement=True,allow_soft_placement=True)
+config = tf.ConfigProto()
 config.gpu_options.per_process_gpu_memory_fraction = 0.99
 config.gpu_options.allow_growth = True
-K.set_session(tf.compat.v1.Session(graph=tf.compat.v1.get_default_graph(),config=config))
+K.set_session(tf.Session(graph=tf.get_default_graph(),config=config))
 
 
 def singleScaleRetinex(img, variance):
@@ -122,112 +121,109 @@ def fusion_model(img):
             conv5_ir=tf.nn.tanh(conv5_ir)
     return conv5_ir
 
-def decoder(img):
-    #Flag1 = tf.concat([ir,vi],axis=-1)
-    with tf.compat.v1.variable_scope('decoder'):
-        with tf.compat.v1.variable_scope('Layer1'):
-            weights=tf.compat.v1.get_variable("W1",initializer=tf.constant(reader.get_tensor('decoder/Layer1/W1')))
-            #weights=weights_spectral_norm(weights)
-            bias=tf.compat.v1.get_variable("B1",initializer=tf.constant(reader.get_tensor('decoder/Layer1/B1')))
-            conv1= tf.compat.v1.layers.batch_normalization(tf.nn.conv2d(img, weights, strides=[1,1,1,1], padding='SAME') + bias, decay=0.9, updates_collections=None, epsilon=1e-5, scale=True)
-            conv1 = lrelu(conv1)
-
-        with tf.compat.v1.variable_scope('Layer2'):
-            weights=tf.compat.v1.get_variable("W2",initializer=tf.constant(reader.get_tensor('decoder/Layer2/W2')))
-            #weights=weights_spectral_norm(weights)
-            bias=tf.compat.v1.get_variable("B2",initializer=tf.constant(reader.get_tensor('decoder/Layer2/B2')))
-            conv2= tf.compat.v1.layers.batch_normalization(tf.nn.conv2d(conv1, weights, strides=[1,1,1,1], padding='SAME') + bias, decay=0.9, updates_collections=None, epsilon=1e-5, scale=True)
-            conv2 = lrelu(conv2)
-
-        with tf.compat.v1.variable_scope('Layer3'):
-            weights=tf.compat.v1.get_variable("W3",initializer=tf.constant(reader.get_tensor('decoder/Layer3/W3')))
-            #weights=weights_spectral_norm(weights)
-            bias=tf.compat.v1.get_variable("B3",initializer=tf.constant(reader.get_tensor('decoder/Layer3/B3')))
-            conv3= tf.compat.v1.layers.batch_normalization(tf.nn.conv2d(conv2, weights, strides=[1,1,1,1], padding='SAME') + bias, decay=0.9, updates_collections=None, epsilon=1e-5, scale=True)
-            conv3 = lrelu(conv3)
-
-        with tf.compat.v1.variable_scope('Layer4'):
-            weights=tf.compat.v1.get_variable("W4",initializer=tf.constant(reader.get_tensor('decoder/Layer4/W4')))
-            #weights=weights_spectral_norm(weights)
-            bias=tf.compat.v1.get_variable("B4",initializer=tf.constant(reader.get_tensor('decoder/Layer4/B4')))
-            conv4= tf.nn.conv2d(conv3, weights, strides=[1,1,1,1], padding='SAME') + bias
-            conv4 = tf.nn.tanh(conv4)
-    return conv4
-
-
 def encoder_ir(img):
-    with tf.name_scope('encoder_ir'):
-        with tf.name_scope('layer1'):
-            weights = tf.constant_initializer(reader.get_tensor('encoder_ir/layer1/w1'))
-            bias = tf.constant_initializer(reader.get_tensor('encoder_ir/layer1/b1'))
-            conv1_ir = tf.keras.layers.Conv2D(filters=64, kernel_size=(3, 3), strides=(1, 1), padding='SAME', use_bias=False, kernel_initializer=weights)(img)
-            conv1_ir = tf.keras.layers.BatchNormalization()(conv1_ir)
-            conv1_ir = tf.keras.layers.LeakyReLU()(conv1_ir)
-
-        with tf.name_scope('layer2'):
-            weights = tf.constant_initializer(reader.get_tensor('encoder_ir/layer2/w2'))
-            bias = tf.constant_initializer(0.0)
-            vivi = tf.concat([images_vi, images_vi], axis=-1)
-            ref = tf.concat([images_vi, images_vi], axis=-1)
-            conv2_add = tf.concat([vivi, conv1_ir], axis=-1)
-            conv2_ir = tf.keras.layers.Conv2D(filters=128, kernel_size=(3, 3), strides=(1, 1), padding='SAME', use_bias=True, kernel_initializer=weights, bias_initializer=bias)(conv2_add)
-            conv2_ir = tf.keras.layers.BatchNormalization()(conv2_ir)
-            conv2_ir = tf.keras.layers.LeakyReLU()(conv2_ir)
-
-        with tf.name_scope('layer3'):
-            weights = tf.constant_initializer(reader.get_tensor('encoder_ir/layer3/w3'))
-            bias = tf.constant_initializer(reader.get_tensor('encoder_ir/layer3/b3'))
-            conv3_add = tf.concat([conv2_add, conv2_ir], axis=-1)
-            conv3_ir = tf.keras.layers.Conv2D(filters=64, kernel_size=(3, 3), strides=(1, 1), padding='SAME', use_bias=True, kernel_initializer=weights, bias_initializer=bias)(conv3_add)
-            conv3_ir = tf.keras.layers.BatchNormalization()(conv3_ir)
-            conv3_ir = tf.keras.layers.LeakyReLU()(conv3_ir)
-
-        with tf.name_scope('layer4'):
-            weights = tf.constant_initializer(reader.get_tensor('encoder_ir/layer4/w4'))
-            bias = tf.constant_initializer(reader.get_tensor('encoder_ir/layer4/b4'))
-            conv4_add = tf.concat([conv3_add, conv3_ir], axis=-1)
-            conv4_ir = tf.keras.layers.Conv2D(filters=32, kernel_size=(3, 3), strides=(1, 1), padding='SAME', use_bias=True, kernel_initializer=weights, bias_initializer=bias)(conv4_add)
-            conv4_ir = tf.keras.layers.BatchNormalization()(conv4_ir)
-            conv4_ir = tf.keras.layers.LeakyReLU()(conv4_ir)
-
-        return conv4_ir
- 
-def encoder_vi(img):
-  with tf.name_scope('encoder_vi'):
-        with tf.name_scope('layer1'):
-            weights=tf.Variable(initial_value=tf.constant(reader.get_tensor('encoder_vi/layer1/w1')), name="w1")
-            bias=tf.Variable(initial_value=tf.constant(reader.get_tensor('encoder_vi/layer1/b1')), name="b1")
-            conv1_ir= tf.keras.layers.Conv2D(filters=64, kernel_size=3, strides=1, padding='SAME')(img)
-            conv1_ir = tf.nn.relu(tf.keras.layers.BatchNormalization()(conv1_ir))
-
-        with tf.name_scope('layer2'):
-            weights=tf.Variable(initial_value=tf.constant(reader.get_tensor('encoder_vi/layer2/w2')), name="w2")
-            bias=tf.Variable(initial_value=tf.zeros([128]), name="b2")
+          
+    with tf.variable_scope('encoder_ir'):
+        with tf.variable_scope('layer1'):
+            weights=tf.get_variable("w1",initializer=tf.constant(reader.get_tensor('encoder_ir/layer1/w1')))
+            bias=tf.get_variable("b1",initializer=tf.constant(reader.get_tensor('encoder_ir/layer1/b1')))
+            conv1_ir= tf.contrib.layers.batch_norm(tf.nn.conv2d(img, weights, strides=[1,1,1,1], padding='SAME') + bias, decay=0.9, updates_collections=None, epsilon=1e-5, scale=True)
+            conv1_ir = lrelu(conv1_ir)
+          
+        with tf.variable_scope('layer2'):
+            weights=tf.get_variable("w2",initializer=tf.constant(reader.get_tensor('encoder_ir/layer2/w2')))
+            
+            bias=tf.get_variable("b2",[128],initializer=tf.constant_initializer(0.0))
             
             vivi = tf.concat([images_vi, images_vi], axis=-1)
             ref  = tf.concat([images_vi,images_vi],axis=-1)
-
+            
+            #conv2_vi=tf.concat([vivi,conv1_ir],axis=-1)
+            #conv2_ref=tf.concat([ref,conv1_ir],axis=-1)
+            
+            #conv2_add =tf.concat([conv2_vi,conv2_ref],axis=-1)
+            
+            
+            #vivi = tf.concat([self.images_vi, self.images_vi], axis=-1)
             conv2_add =tf.concat([vivi,conv1_ir],axis=-1)
-            conv2_ir = tf.keras.layers.Conv2D(filters=64, kernel_size=3, strides=1, padding='SAME')(conv2_add)
-            conv2_ir = tf.nn.relu(tf.keras.layers.BatchNormalization()(conv2_ir))
+            # conv2_add = conv1_ir
+            # conv2_add = conv1_ir
+            conv2_ir= tf.contrib.layers.batch_norm(tf.nn.conv2d(conv2_add, weights, strides=[1,1,1,1], padding='SAME') + bias, decay=0.9, updates_collections=None, epsilon=1e-5, scale=True)
+            conv2_ir = lrelu(conv2_ir)
 
-        with tf.name_scope('layer3'):
-            weights=tf.Variable(initial_value=tf.constant(reader.get_tensor('encoder_vi/layer3/w3')), name="w3")
-            bias=tf.Variable(initial_value=tf.constant(reader.get_tensor('encoder_vi/layer3/b3')), name="b3")
+        with tf.variable_scope('layer3'):
+            # weights=tf.get_variable("w3",[3,3,130,64],initializer=tf.truncated_normal_initializer(stddev=1e-3))
+            weights=tf.get_variable("w3",initializer=tf.constant(reader.get_tensor('encoder_ir/layer3/w3')))
+            
+            bias=tf.get_variable("b3",initializer=tf.constant(reader.get_tensor('encoder_ir/layer3/b3')))
             conv3_add = tf.concat([conv2_add, conv2_ir], axis=-1)
-            conv3_ir = tf.keras.layers.Conv2D(filters=64, kernel_size=3, strides=1, padding='SAME')(conv3_add)
-            conv3_ir = tf.nn.relu(tf.keras.layers.BatchNormalization()(conv3_ir))
+            conv3_ir= tf.contrib.layers.batch_norm(tf.nn.conv2d(conv3_add, weights, strides=[1,1,1,1], padding='SAME') + bias, decay=0.9, updates_collections=None, epsilon=1e-5, scale=True)
+            conv3_ir = lrelu(conv3_ir)
 
-        with tf.name_scope('layer4'):
-            weights=tf.Variable(initial_value=tf.constant(reader.get_tensor('encoder_vi/layer4/w4')), name="w4")
-            bias=tf.Variable(initial_value=tf.constant(reader.get_tensor('encoder_vi/layer4/b4')), name="b4")
+        with tf.variable_scope('layer4'):
+            # weights=tf.get_variable("w4",[3,3,66,32],initializer=tf.truncated_normal_initializer(stddev=1e-3))
+            weights=tf.get_variable("w4",initializer=tf.constant(reader.get_tensor('encoder_ir/layer4/w4')))
+            
+            bias=tf.get_variable("b4",initializer=tf.constant(reader.get_tensor('encoder_ir/layer4/b4')))
             conv4_add = tf.concat([conv3_add, conv3_ir], axis=-1)
-            conv4_ir = tf.keras.layers.Conv2D(filters=64, kernel_size=3, strides=1, padding='SAME')(conv4_add)
-            conv4_ir = tf.nn.relu(tf.keras.layers.BatchNormalization()(conv4_ir))
+            conv4_ir= tf.contrib.layers.batch_norm(tf.nn.conv2d(conv4_add, weights, strides=[1,1,1,1], padding='SAME') + bias, decay=0.9, updates_collections=None, epsilon=1e-5, scale=True)
+            conv4_ir = lrelu(conv4_ir)
 
-        return conv4_ir
+            
+        return conv4_ir      
+      
 
-'''      
+
+def encoder_vi(img):
+  with tf.variable_scope('encoder_vi'):
+        with tf.variable_scope('layer1'):
+            weights=tf.get_variable("w1",initializer=tf.constant(reader.get_tensor('encoder_vi/layer1/w1')))
+            bias=tf.get_variable("b1",initializer=tf.constant(reader.get_tensor('encoder_vi/layer1/b1')))
+            conv1_ir= tf.contrib.layers.batch_norm(tf.nn.conv2d(img, weights, strides=[1,1,1,1], padding='SAME') + bias, decay=0.9, updates_collections=None, epsilon=1e-5, scale=True)
+            conv1_ir = lrelu(conv1_ir)
+          
+        with tf.variable_scope('layer2'):
+            weights=tf.get_variable("w2",initializer=tf.constant(reader.get_tensor('encoder_vi/layer2/w2')))
+            
+            bias=tf.get_variable("b2",[128],initializer=tf.constant_initializer(0.0))
+            
+            vivi = tf.concat([images_vi, images_vi], axis=-1)
+            ref  = tf.concat([images_vi,images_vi],axis=-1)
+            
+            #conv2_vi=tf.concat([vivi,conv1_ir],axis=-1)
+            #conv2_ref=tf.concat([ref,conv1_ir],axis=-1)
+            
+            #conv2_add =tf.concat([conv2_vi,conv2_ref],axis=-1)
+            
+            
+            #vivi = tf.concat([self.images_vi, self.images_vi], axis=-1)
+            conv2_add =tf.concat([vivi,conv1_ir],axis=-1)
+            # conv2_add = conv1_ir
+            # conv2_add = conv1_ir
+            conv2_ir= tf.contrib.layers.batch_norm(tf.nn.conv2d(conv2_add, weights, strides=[1,1,1,1], padding='SAME') + bias, decay=0.9, updates_collections=None, epsilon=1e-5, scale=True)
+            conv2_ir = lrelu(conv2_ir)
+
+        with tf.variable_scope('layer3'):
+            # weights=tf.get_variable("w3",[3,3,130,64],initializer=tf.truncated_normal_initializer(stddev=1e-3))
+            weights=tf.get_variable("w3",initializer=tf.constant(reader.get_tensor('encoder_vi/layer3/w3')))
+            
+            bias=tf.get_variable("b3",initializer=tf.constant(reader.get_tensor('encoder_vi/layer3/b3')))
+            conv3_add = tf.concat([conv2_add, conv2_ir], axis=-1)
+            conv3_ir= tf.contrib.layers.batch_norm(tf.nn.conv2d(conv3_add, weights, strides=[1,1,1,1], padding='SAME') + bias, decay=0.9, updates_collections=None, epsilon=1e-5, scale=True)
+            conv3_ir = lrelu(conv3_ir)
+
+        with tf.variable_scope('layer4'):
+            # weights=tf.get_variable("w4",[3,3,66,32],initializer=tf.truncated_normal_initializer(stddev=1e-3))
+            weights=tf.get_variable("w4",initializer=tf.constant(reader.get_tensor('encoder_vi/layer4/w4')))
+            
+            bias=tf.get_variable("b4",initializer=tf.constant(reader.get_tensor('encoder_vi/layer4/b4')))
+            conv4_add = tf.concat([conv3_add, conv3_ir], axis=-1)
+            conv4_ir= tf.contrib.layers.batch_norm(tf.nn.conv2d(conv4_add, weights, strides=[1,1,1,1], padding='SAME') + bias, decay=0.9, updates_collections=None, epsilon=1e-5, scale=True)
+            conv4_ir = lrelu(conv4_ir)
+
+            
+        return conv4_ir      
+      
 def decoder(img):
     #Flag1 = tf.concat([ir,vi],axis=-1)
     with tf.variable_scope('decoder'):
@@ -259,7 +255,7 @@ def decoder(img):
             conv4= tf.nn.conv2d(conv3, weights, strides=[1,1,1,1], padding='SAME') + bias
             conv4 = tf.nn.tanh(conv4)
     return conv4
-'''
+
 
 def input_setup(index):
     padding=0
@@ -314,24 +310,15 @@ ref_img = all_image_files[dataset_type]['ref_img']
 
 num_epoch=28
 path = '_100_onlyadd_THREE22'
-#reader = tf.train.load_checkpoint('./checkpoint_20/ENH_CGAN'+path+'/CGAN.model-'+ str(num_epoch))
-
-checkpoint_path = './checkpoint_20/ENH_CGAN'+path+'/CGAN.model-'+ str(num_epoch)
-reader = tf.train.load_checkpoint(checkpoint_path)
-var_names = reader.get_variable_to_shape_map().keys()
-# retrieve the variable values
-var_values = [reader.get_tensor(var_name) for var_name in var_names]
-
+reader = tf.train.NewCheckpointReader('./checkpoint_20/ENH_CGAN'+path+'/CGAN.model-'+ str(num_epoch))
 
 with tf.name_scope('IR_input'):
 
-    #images_ir = tf.placeholder(tf.float32, [1,None,None,None], name='images_ir')
-    images_ir = tf.keras.Input(shape=(None,None,None), batch_size=1, name='images_ir')
+    images_ir = tf.placeholder(tf.float32, [1,None,None,None], name='images_ir')
     
 with tf.name_scope('VI_input'):
     
-        #images_vi = tf.placeholder(tf.float32,  [1,None,None,None], name='images_vi')
-        images_vi = tf.keras.Input(shape=(None,None,None), batch_size=1, name='images_vi')
+        images_vi = tf.placeholder(tf.float32,  [1,None,None,None], name='images_vi')
         
 with tf.name_scope('input'):
     #self.resize_ir=tf.image.resize_images(self.images_ir, (self.image_size, self.image_size), method=2)
@@ -340,8 +327,7 @@ with tf.name_scope('input'):
 #self.pred=tf.clip_by_value(tf.sign(self.pred_ir-self.pred_vi),0,1)
 with tf.name_scope('ref_input'):
   #images_ref=referance_images(images_ir, images_vi)
-    #images_ref=tf.placeholder(tf.float32, [1,None,None,None], name='images_ref')
-    images_ref = tf.keras.Input(shape=(None,None,None), batch_size=1, name='images_ref')
+    images_ref=tf.placeholder(tf.float32, [1,None,None,None], name='images_ref')
 
 
 with tf.name_scope('fusion'): 
@@ -353,7 +339,7 @@ with tf.name_scope('fusion'):
     fusion_image=decoder(fusion_image_fff)
 
 
-with tf.compat.v1.Session() as sess:
+with tf.Session() as sess:
     init_op=tf.global_variables_initializer()
     sess.run(init_op)
     #data_ir=prepare_data('Enh_IR')
